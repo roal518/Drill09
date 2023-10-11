@@ -60,11 +60,11 @@ class Auto_Run:
         boy.frame = (boy.frame+1) % 7
 
         if boy.state == 0:
-            boy.x += 3
+            boy.x +=  7
             if boy.x > 800:
                 boy.state = 1
         elif boy.state == 1:
-            boy.x -= 3
+            boy.x -=  7
             if boy.x < 0:
                 boy.state = 0
         if get_time() - boy.auto_start_time > 3:
