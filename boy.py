@@ -10,6 +10,7 @@ def time_out(e):
 class Idle:
     @staticmethod
     def enter(boy, e):
+        boy.action = 3
         print('Idle Enter - 고개숙이기')
 
     @staticmethod
@@ -22,11 +23,9 @@ class Idle:
         boy.frame = (boy.frame+1) % 7
     @staticmethod
     def draw(boy):
-        if boy.action == 3:
-            boy.action= 3
+        if boy.state == 0:
             boy.image.clip_draw(boy.frame*100,boy.action*100,100,100,boy.x,boy.y)
-        elif boy.action == 3:
-
+        elif boy.state == 1:
             boy.image.clip_composite_draw(boy.frame * 100, 300, 100, 100,
                                           0, 'h', boy.x, boy.y, 100, 100)
         pass
@@ -34,8 +33,8 @@ class Idle:
 class Auto_Run:
     @staticmethod
     def enter(boy,e):
+        boy.action = 1
         boy.auto_start_time = get_time()
-
     @staticmethod
     def exit(boy,e):
         print('Idle Exit - 고개 들기')
@@ -45,16 +44,23 @@ class Auto_Run:
         print('Idle Do - ZZZ')
         boy.frame = (boy.frame+1) % 7
 
-
+        if boy.state == 0:
+            boy.x += 3
+            if boy.x > 800:
+                boy.state = 1
+        elif boy.state == 1:
+            boy.x -= 3
+            if boy.x < 0:
+                boy.state = 0
         if get_time() - boy.auto_start_time > 3:
             boy.state_machine.handle_event(("TIME_OUT",0))
     @staticmethod
     def draw(boy):
-        if boy.action == 1:
-            boy.image.clip_draw(boy.frame*100,boy.action*100,100,100,boy.x,boy.y)
-        elif boy.action == 1:
-            boy.image.clip_draw(boy.frame * 100, boy.action * 100, 100, 100, boy.x, boy.y)
-        pass
+        if boy.state == 0:
+            boy.image.clip_draw(boy.frame * 100, boy.action * 100, 100, 100, boy.x, boy.y*1.3-25,130,130)
+        elif boy.state == 1:
+            boy.image.clip_composite_draw(boy.frame * 100, boy.action * 100, 100, 100,
+                                          0, 'h', boy.x, boy.y*1.3-25, 130, 130)
 
 
 class StateMachine:
@@ -89,7 +95,7 @@ class Boy:
         self.x, self.y = 400, 90
         self.frame = 1
         self.action = 3 #SHEET LOCATION
-        self.state = 0 #IDLE or AUTO
+        self.state = 0 #LEFT or RIGHT with start right
         self.image = load_image('animation_sheet.png')
         self.state_machine = StateMachine(self)
         #
