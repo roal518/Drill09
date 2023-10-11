@@ -2,15 +2,29 @@
 
 from pico2d import *
 
-
+def space_down(e):
+    return e[0] =='INPUT' and e[1].type ==SDL_KEYDOWN and e[1].key ==SDLK_SPACE
+def time_out(e):
+    return e[0] == 'TIME_OUT'
 def auto(e):
     return e[0] =='INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_a
 def time_out(e):
     return e[0] == 'TIME_OUT'
+def right_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
+def right_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_RIGHT
+def left_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LEFT
+def left_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
+
+
 class Idle:
     @staticmethod
     def enter(boy, e):
         boy.action = 3
+        boy.start_time = get_time()
         print('Idle Enter - 고개숙이기')
 
     @staticmethod
@@ -21,6 +35,8 @@ class Idle:
     def do(boy):
         print('Idle Do - ZZZ')
         boy.frame = (boy.frame+1) % 7
+        if get_time()-boy.start_time > 4:
+            boy.state_machine.handle_event(('TIME_OUT',0))
     @staticmethod
     def draw(boy):
         if boy.state == 0:
@@ -29,7 +45,6 @@ class Idle:
             boy.image.clip_composite_draw(boy.frame * 100, 300, 100, 100,
                                           0, 'h', boy.x, boy.y, 100, 100)
         pass
-
 class Auto_Run:
     @staticmethod
     def enter(boy,e):
@@ -61,15 +76,57 @@ class Auto_Run:
         elif boy.state == 1:
             boy.image.clip_composite_draw(boy.frame * 100, boy.action * 100, 100, 100,
                                           0, 'h', boy.x, boy.y*1.3-25, 130, 130)
+class Sleep:
+    @staticmethod
+    def enter(boy,e):
+        boy.frame = 0
+    @staticmethod
+    def exit(boy,e):
+        pass
 
+    @staticmethod
+    def do(boy):
+        boy.frame = (boy.frame+1) % 8
 
+    @staticmethod
+    def draw(boy):
+        if boy.state == 1:
+            boy.image.clip_composite_draw(boy.frame * 100, 200, 100, 100,
+                                          -3.141592 / 2, '', boy.x + 25, boy.y - 25, 100, 100)
+        else:
+            boy.image.clip_composite_draw(boy.frame * 100, 300, 100, 100,
+                                          3.141592 / 2, '', boy.x - 25, boy.y - 25, 100, 100)
+class Run:
+    @staticmethod
+    def enter(boy, e):
+        if right_down(e) or left_up(e): # 오른쪽으로 RUN
+            boy.dir, boy.action = 1, 1
+            boy.state = 0
+        elif left_down(e) or right_up(e): # 왼쪽으로 RUN
+            boy.dir, boy.action = -1, 0
+            boy.state = 1
+    @staticmethod
+    def exit(boy, e):
+        pass
+    @staticmethod
+    def do(boy):
+        boy.frame = (boy.frame + 1) % 8
+        boy.x += boy.dir * 5
+        pass
+    @staticmethod
+    def draw(boy):
+        boy.image.clip_draw(boy.frame * 100, boy.action * 100, 100, 100, boy.x, boy.y)
 class StateMachine:
     def __init__(self,boy):
         #boy는 소년 객체
         self.cur_state = Idle
         self.boy = boy
         self.transitions = {
-            Idle: {auto: Auto_Run},
+            Sleep: {space_down:Idle,right_down:Run,left_down:Run,
+                    right_up:Run,left_up:Run,auto:Auto_Run},
+            Idle: {auto: Auto_Run, right_down:Run, left_down:Run,
+                   right_up:Run,left_up:Run,time_out:Sleep},
+            Run:{right_down: Idle, left_down: Idle, right_up: Idle, left_up: Idle},
             Auto_Run: {time_out: Idle}
         }
     def handle_event(self,e):
