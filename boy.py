@@ -23,8 +23,10 @@ class Idle:
     @staticmethod
     def draw(boy):
         if boy.action == 3:
+            boy.action= 3
             boy.image.clip_draw(boy.frame*100,boy.action*100,100,100,boy.x,boy.y)
-        elif boy.action == 4:
+        elif boy.action == 3:
+
             boy.image.clip_composite_draw(boy.frame * 100, 300, 100, 100,
                                           0, 'h', boy.x, boy.y, 100, 100)
         pass
@@ -42,20 +44,16 @@ class Auto_Run:
     def do(boy):
         print('Idle Do - ZZZ')
         boy.frame = (boy.frame+1) % 7
-        if boy.action == 3:
-            boy.x -= 1
-            if boy.x <= 0:
-                boy.action = 4
-        elif boy.action == 4:
-            boy.x += 1
-            if boy.x >= 800:
-                boy.action = 3
 
-        if get_time() - boy.auto_start_time > 5:
+
+        if get_time() - boy.auto_start_time > 3:
             boy.state_machine.handle_event(("TIME_OUT",0))
     @staticmethod
     def draw(boy):
-        boy.image.clip_draw(boy.frame*100,boy.action*100,100,100,boy.x,boy.y)
+        if boy.action == 1:
+            boy.image.clip_draw(boy.frame*100,boy.action*100,100,100,boy.x,boy.y)
+        elif boy.action == 1:
+            boy.image.clip_draw(boy.frame * 100, boy.action * 100, 100, 100, boy.x, boy.y)
         pass
 
 
@@ -90,7 +88,8 @@ class Boy:
     def __init__(self):
         self.x, self.y = 400, 90
         self.frame = 1
-        self.action = 4
+        self.action = 3 #SHEET LOCATION
+        self.state = 0 #IDLE or AUTO
         self.image = load_image('animation_sheet.png')
         self.state_machine = StateMachine(self)
         #
