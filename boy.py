@@ -3,25 +3,55 @@
 from pico2d import *
 
 
-def auto_run(e):
+def auto(e):
     return e[0] =='INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_a
 def time_out(e):
     return e[0] == 'TIME_OUT'
 class Idle:
     @staticmethod
-    def enter(boy):
+    def enter(boy, e):
         print('Idle Enter - 고개숙이기')
-        boy.idle_start_time = get_time()
 
     @staticmethod
-    def exit(boy):
+    def exit(boy, e):
         print('Idle Exit - 고개 들기')
 
     @staticmethod
     def do(boy):
         print('Idle Do - ZZZ')
-        boy.frame=(boy.frame+1)%7
-        if get_time() - boy.idle_start_time > 3:
+        boy.frame = (boy.frame+1) % 7
+    @staticmethod
+    def draw(boy):
+        if boy.action == 3:
+            boy.image.clip_draw(boy.frame*100,boy.action*100,100,100,boy.x,boy.y)
+        elif boy.action == 4:
+            boy.image.clip_composite_draw(boy.frame * 100, 300, 100, 100,
+                                          0, 'h', boy.x, boy.y, 100, 100)
+        pass
+
+class Auto_Run:
+    @staticmethod
+    def enter(boy,e):
+        boy.auto_start_time = get_time()
+
+    @staticmethod
+    def exit(boy,e):
+        print('Idle Exit - 고개 들기')
+
+    @staticmethod
+    def do(boy):
+        print('Idle Do - ZZZ')
+        boy.frame = (boy.frame+1) % 7
+        if boy.action == 3:
+            boy.x -= 1
+            if boy.x <= 0:
+                boy.action = 4
+        elif boy.action == 4:
+            boy.x += 1
+            if boy.x >= 800:
+                boy.action = 3
+
+        if get_time() - boy.auto_start_time > 5:
             boy.state_machine.handle_event(("TIME_OUT",0))
     @staticmethod
     def draw(boy):
@@ -29,28 +59,25 @@ class Idle:
         pass
 
 
-
-
 class StateMachine:
     def __init__(self,boy):
         #boy는 소년 객체
-        self.cur_state = Sleep
+        self.cur_state = Idle
         self.boy = boy
         self.transitions = {
-            Sleep: {space_down: Idle},
-            Idle: {time_out: Sleep},
-
+            Idle: {auto: Auto_Run},
+            Auto_Run: {time_out: Idle}
         }
     def handle_event(self,e):
         for check_event,next_state in self.transitions[self.cur_state].items():
             if check_event(e):
-                self.cur_state.exit(self.boy)
+                self.cur_state.exit(self.boy,e)
                 self.cur_state = next_state
-                self.cur_state.enter(self.boy)
+                self.cur_state.enter(self.boy,e)
                 return True
         return False
     def start(self):
-        self.cur_state.enter(self.boy)
+        self.cur_state.enter(self.boy,('NONE',0))
     def update(self):
         self.cur_state.do(self.boy)
     def draw(self):
@@ -63,7 +90,7 @@ class Boy:
     def __init__(self):
         self.x, self.y = 400, 90
         self.frame = 1
-        self.action = 3
+        self.action = 4
         self.image = load_image('animation_sheet.png')
         self.state_machine = StateMachine(self)
         #
