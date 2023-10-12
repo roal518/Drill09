@@ -127,7 +127,8 @@ class StateMachine:
             Idle: {auto: Auto_Run, right_down:Run, left_down:Run,
                    right_up:Run,left_up:Run,time_out:Sleep},
             Run:{right_down: Idle, left_down: Idle, right_up: Idle, left_up: Idle},
-            Auto_Run: {time_out: Idle}
+            Auto_Run: {time_out: Idle,right_down:Run,left_down:Run,
+                    right_up:Run,left_up:Run}
         }
     def handle_event(self,e):
         for check_event,next_state in self.transitions[self.cur_state].items():
